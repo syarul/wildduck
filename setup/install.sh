@@ -543,29 +543,7 @@ chmod +x /usr/local/bin/reload-services.sh
     --force || echo "Warning: Failed to generate certificates, using self-signed certs"
 
 # Update site config, make sure ssl is enabled
-echo "server {
-    listen 80;
-    server_name $HOSTNAME;
-    return 301 https://\$server_name\$request_uri;
-}
 
-#server {
-#    listen 443 ssl http2;
-#
-#    server_name $HOSTNAME;
-#
-#    ssl_certificate /etc/wildduck/certs/fullchain.pem;
-#    ssl_certificate_key /etc/wildduck/certs/privkey.pem;
-#
-#    location / {
-#        proxy_set_header X-Real-IP \$remote_addr;
-#        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-#        proxy_set_header HOST \$http_host;
-#        proxy_set_header X-NginX-Proxy true;
-#        proxy_pass http://127.0.0.1:3000;
-#        proxy_redirect off;
-#    }
-#}" > "/etc/nginx/sites-available/$HOSTNAME"
 #systemctl reload nginx
 
 # update reload script for future updates
