@@ -427,93 +427,93 @@ systemctl enable zone-mta.service
 #### WWW ####
 ####
 # clear previous install
-#if [ -f "/etc/systemd/system/wildduck-webmail.service" ]
-#then
-#    systemctl stop wildduck-webmail || true
-#    systemctl disable wildduck-webmail || true
-#    rm -rf /etc/systemd/system/wildduck-webmail.service
-#fi
-#rm -rf /var/opt/wildduck-webmail.git
-#rm -rf /opt/wildduck-webmail
-#
-## fresh install
-#cd /var/opt
-#git clone --bare git://github.com/nodemailer/wildduck-webmail.git
-#
-## create update hook so we can later deploy to this location
-#hook_script wildduck-webmail
-#chmod +x /var/opt/wildduck-webmail.git/hooks/update
-#
-## allow deploy user to restart zone-mta service
-#echo 'deploy ALL = (root) NOPASSWD: /bin/systemctl restart wildduck-webmail' >> /etc/sudoers.d/wildduck-webmail
-#
-## checkout files from git to working directory
-#mkdir -p /opt/wildduck-webmail
-#git --git-dir=/var/opt/wildduck-webmail.git --work-tree=/opt/wildduck-webmail checkout "$WEBMAIL_COMMIT"
-#cp /opt/wildduck-webmail/config/default.toml /etc/wildduck/wildduck-webmail.toml
-#
-#sed -i -e "s/localhost/$HOSTNAME/g;s/999/99/g;s/2587/587/g" /etc/wildduck/wildduck-webmail.toml
-#
-#cd /opt/wildduck-webmail
-#npm install --unsafe-perm --production
-#
-#chown -R deploy:deploy /var/opt/wildduck-webmail.git
-#chown -R deploy:deploy /opt/wildduck-webmail
-#
-#echo '[Unit]
-#Description=Wildduck Webmail
-#After=wildduck.service
-#
-#[Service]
-#Environment="NODE_ENV=production"
-#WorkingDirectory=/opt/wildduck-webmail
-#ExecStart=/usr/bin/node server.js --config="/etc/wildduck/wildduck-webmail.toml"
-#ExecReload=/bin/kill -HUP $MAINPID
-#Type=simple
-#Restart=always
-#
-#[Install]
-#WantedBy=multi-user.target' > /etc/systemd/system/wildduck-webmail.service
-#
+if [ -f "/etc/systemd/system/wildduck-webmail.service" ]
+then
+    systemctl stop wildduck-webmail || true
+    systemctl disable wildduck-webmail || true
+    rm -rf /etc/systemd/system/wildduck-webmail.service
+fi
+rm -rf /var/opt/wildduck-webmail.git
+rm -rf /opt/wildduck-webmail
+
+# fresh install
+cd /var/opt
+git clone --bare git://github.com/nodemailer/wildduck-webmail.git
+
+# create update hook so we can later deploy to this location
+hook_script wildduck-webmail
+chmod +x /var/opt/wildduck-webmail.git/hooks/update
+
+# allow deploy user to restart zone-mta service
+echo 'deploy ALL = (root) NOPASSWD: /bin/systemctl restart wildduck-webmail' >> /etc/sudoers.d/wildduck-webmail
+
+# checkout files from git to working directory
+mkdir -p /opt/wildduck-webmail
+git --git-dir=/var/opt/wildduck-webmail.git --work-tree=/opt/wildduck-webmail checkout "$WEBMAIL_COMMIT"
+cp /opt/wildduck-webmail/config/default.toml /etc/wildduck/wildduck-webmail.toml
+
+sed -i -e "s/localhost/$HOSTNAME/g;s/999/99/g;s/2587/587/g" /etc/wildduck/wildduck-webmail.toml
+
+cd /opt/wildduck-webmail
+npm install --unsafe-perm --production
+
+chown -R deploy:deploy /var/opt/wildduck-webmail.git
+chown -R deploy:deploy /opt/wildduck-webmail
+
+echo '[Unit]
+Description=Wildduck Webmail
+After=wildduck.service
+
+[Service]
+Environment="NODE_ENV=production"
+WorkingDirectory=/opt/wildduck-webmail
+ExecStart=/usr/bin/node server.js --config="/etc/wildduck/wildduck-webmail.toml"
+ExecReload=/bin/kill -HUP $MAINPID
+Type=simple
+Restart=always
+
+[Install]
+WantedBy=multi-user.target' > /etc/systemd/system/wildduck-webmail.service
+
 #systemctl enable wildduck-webmail.service
 
 #### NGINX ####
 
 # Create initial certs. These will be overwritten later by Let's Encrypt certs
-#mkdir -p /etc/wildduck/certs
-#cd /etc/wildduck/certs
-#openssl req -subj "/CN=$HOSTNAME/O=My Company Name LTD./C=US" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout privkey.pem -out fullchain.pem
-#
-#chown -R wildduck:wildduck /etc/wildduck/certs
-#chmod 0700 /etc/wildduck/certs/privkey.pem
-#
-## Setup domain without SSL at first, otherwise acme.sh will fail
-#echo "server {
-#    listen 80;
-#
-#    server_name $HOSTNAME;
-#
-#    ssl_certificate /etc/wildduck/certs/fullchain.pem;
-#    ssl_certificate_key /etc/wildduck/certs/privkey.pem;
-#
-#    location / {
-#        proxy_set_header X-Real-IP \$remote_addr;
-#        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-#        proxy_set_header HOST \$http_host;
-#        proxy_set_header X-NginX-Proxy true;
-#        proxy_pass http://127.0.0.1:3000;
-#        proxy_redirect off;
-#    }
-#}" > "/etc/nginx/sites-available/$HOSTNAME"
-#rm -rf "/etc/nginx/sites-enabled/$HOSTNAME"
-#ln -s "/etc/nginx/sites-available/$HOSTNAME" "/etc/nginx/sites-enabled/$HOSTNAME"
+mkdir -p /etc/wildduck/certs
+cd /etc/wildduck/certs
+openssl req -subj "/CN=$HOSTNAME/O=My Company Name LTD./C=US" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout privkey.pem -out fullchain.pem
+
+chown -R wildduck:wildduck /etc/wildduck/certs
+chmod 0700 /etc/wildduck/certs/privkey.pem
+
+# Setup domain without SSL at first, otherwise acme.sh will fail
+echo "server {
+    listen 80;
+
+    server_name $HOSTNAME;
+
+    ssl_certificate /etc/wildduck/certs/fullchain.pem;
+    ssl_certificate_key /etc/wildduck/certs/privkey.pem;
+
+    location / {
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header HOST \$http_host;
+        proxy_set_header X-NginX-Proxy true;
+        proxy_pass http://127.0.0.1:3000;
+        proxy_redirect off;
+    }
+}" > "/etc/nginx/sites-available/$HOSTNAME"
+rm -rf "/etc/nginx/sites-enabled/$HOSTNAME"
+ln -s "/etc/nginx/sites-available/$HOSTNAME" "/etc/nginx/sites-enabled/$HOSTNAME"
 #systemctl reload nginx
 
 #### UFW ####
 
 ufw allow 22/tcp
-#ufw allow 80/tcp
-#ufw allow 443/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
 ufw allow 25/tcp
 ufw allow 587/tcp
 ufw allow 993/tcp
@@ -543,36 +543,38 @@ chmod +x /usr/local/bin/reload-services.sh
     --force || echo "Warning: Failed to generate certificates, using self-signed certs"
 
 # Update site config, make sure ssl is enabled
-#echo "server {
-#    listen 80;
-#    server_name $HOSTNAME;
-#    return 301 https://\$server_name\$request_uri;
-#}
-#
-#server {
-#    listen 443 ssl http2;
-#
-#    server_name $HOSTNAME;
-#
-#    ssl_certificate /etc/wildduck/certs/fullchain.pem;
-#    ssl_certificate_key /etc/wildduck/certs/privkey.pem;
-#
-#    location / {
-#        proxy_set_header X-Real-IP \$remote_addr;
-#        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-#        proxy_set_header HOST \$http_host;
-#        proxy_set_header X-NginX-Proxy true;
-#        proxy_pass http://127.0.0.1:3000;
-#        proxy_redirect off;
-#    }
-#}" > "/etc/nginx/sites-available/$HOSTNAME"
+echo "server {
+    listen 80;
+    server_name $HOSTNAME;
+    return 301 https://\$server_name\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+
+    server_name $HOSTNAME;
+
+    ssl_certificate /etc/wildduck/certs/fullchain.pem;
+    ssl_certificate_key /etc/wildduck/certs/privkey.pem;
+
+    location / {
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header HOST \$http_host;
+        proxy_set_header X-NginX-Proxy true;
+        proxy_pass http://127.0.0.1:3000;
+        proxy_redirect off;
+    }
+}" > "/etc/nginx/sites-available/$HOSTNAME"
 #systemctl reload nginx
 
 # update reload script for future updates
 echo '#!/bin/bash
+/bin/systemctl reload nginx
 /bin/systemctl reload wildduck
 /bin/systemctl restart zone-mta
-/bin/systemctl restart haraka' > /usr/local/bin/reload-services.sh
+/bin/systemctl restart haraka
+/bin/systemctl restart wildduck-webmail' > /usr/local/bin/reload-services.sh
 chmod +x /usr/local/bin/reload-services.sh
 
 ### start services ####
