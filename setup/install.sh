@@ -518,11 +518,11 @@ ufw allow 25/tcp
 ufw allow 587/tcp
 ufw allow 993/tcp
 ufw allow 995/tcp
-ufw --force enable
+#ufw --force enable
 
 #### SSL CERTS ####
 
-curl https://get.acme.sh | sh
+#curl https://get.acme.sh | sh
 
 echo 'cert="/etc/wildduck/certs/fullchain.pem"
 key="/etc/wildduck/certs/privkey.pem"' > /etc/wildduck/tls.toml
